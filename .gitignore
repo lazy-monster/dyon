@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.installed.cfg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Keep .env.example
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+
+# Linting
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Trained policies
+policies/
+*.zip
+
+# Docker volumes / data (anchored to repo root — dyon/data is source code)
+/data/
+influxdb_data/
+mongodb_data/
+redis_data/
+minio_data/
+neo4j_data/
+grafana_data/
+
+# Generated infra
+docker-compose.yml
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,13 @@
+# Run `pre-commit install` once to enable these hooks locally.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+        args: [--check]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.4.20
+    hooks:
+      - id: uv-lock

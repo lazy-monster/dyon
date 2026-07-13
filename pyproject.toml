@@ -1,0 +1,192 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dyon"
+version = "0.10.2"
+description = "Domain-agnostic Python framework for digital twin architectures"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "the Dyon authors", email = "galisamuel97@gmail.com" }]
+keywords = [
+    "digital-twin",
+    "iot",
+    "simulation",
+    "mqtt",
+    "reinforcement-learning",
+    "telemetry",
+    "autonomous-systems",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Monitoring",
+]
+# The core install is deliberately lean: an MQTT→API twin with config, the REST
+# layer, and the client-rendered dashboard. Every heavy capability (stores,
+# agents, RL, simulation, forecasting, voice) is an optional extra below. All
+# heavy imports are lazy and routed through ``dyon._compat.require`` so a missing
+# dependency fails with the exact ``pip install 'dyon[<extra>]'`` to run.
+dependencies = [
+    "paho-mqtt>=2.0",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "python-dotenv>=1.0",
+    "fastapi>=0.109",
+    # The dashboard's speech-to-text route takes an UploadFile, and FastAPI
+    # refuses to build a form route without this. mount_visualization() binds
+    # that route unconditionally, so a core install needs it to serve the
+    # dashboard at all.
+    "python-multipart>=0.0.18",
+    "uvicorn[standard]>=0.27",
+    "httpx>=0.26",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+# Persistence backends: time-series, document, cache, object, and SQL stores.
+stores = [
+    "influxdb-client>=1.40",
+    "pandas>=2.0",     # InfluxAdapter.query_recent returns/collapses DataFrames
+    "pymongo>=4.6",
+    "redis>=5.0",
+    "minio>=7.2",
+    "asyncpg>=0.29",   # PostgreSQL — RuleRepository / PostgresAdapter
+]
+# Intelligent + autonomous layers: LangChain agents, the knowledge graph, and
+# sentiment scoring for text ingestion.
+agents = [
+    "langchain>=0.3",
+    "langchain-classic>=0.1",
+    "langchain-community>=0.3",
+    "langchain-openai>=0.2",
+    "langchain-anthropic>=0.2",
+    "langchain-ollama>=0.2",
+    "neo4j>=5.17",
+    "vaderSentiment>=3.3",
+]
+# Reinforcement learning + Learning-from-Demonstration.
+# NOTE: the `imitation` library hard-pins these — sb3~=2.2.1 and gymnasium 0.29.x.
+# The upper bounds keep the resolver from pulling newer versions imitation rejects.
+rl = [
+    "stable-baselines3>=2.2,<2.3",
+    "gymnasium>=0.29,<0.30",
+    "imitation>=1.0,<2.0",
+]
+# Simulation, reactive control, and surrogate ML.
+sim = [
+    "simpy>=4.1",
+    "scipy>=1.12",
+    "transitions>=0.9",
+    "simple-pid>=2.0",
+    "scikit-learn>=1.4",
+    "onnxruntime>=1.17",
+]
+# Serial / hardware publishers.
+hardware = [
+    "pyserial>=3.5",
+]
+# Visualization extras. The dashboard and charts render client-side from pinned
+# CDN libraries (Vega-Lite, <model-viewer>), so the base 'viz' extra is empty by
+# design — FastAPI is already a core dependency and nothing else is needed to
+# serve the dashboard. 'forecast' adds the optional forecasting backend the
+# /api/viz/forecast endpoint and the agent forecast tool use; 'voice' adds a
+# server-side STT/TTS backend (the default voice path is the browser's Web
+# Speech API and needs no install). '3d' is reserved for future server-side GLB
+# processing — the 3D viewport itself renders in the browser.
+viz = []
+forecast = [
+    "prophet>=1.1",
+]
+voice = [
+    "faster-whisper>=1.0",
+]
+3d = []
+# Everything, for a full install (`pip install 'dyon[all]'`).
+all = [
+    "dyon[stores,agents,rl,sim,hardware,forecast,voice]",
+]
+dev = [
+    "dyon[all]",
+    "pytest>=7.4",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.1",
+    # Floors track uv.lock, which is what CI resolves from. Keep them in step:
+    # an older ruff or mypy simply does not know the rules CI enforces, so it
+    # reports a clean tree that CI then fails.
+    "ruff>=0.15.17",
+    "mypy>=2.1",
+    "pre-commit>=3.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/lazy-monster/dyon"
+Repository = "https://github.com/lazy-monster/dyon"
+Documentation = "https://github.com/lazy-monster/dyon/tree/main/guide"
+Issues = "https://github.com/lazy-monster/dyon/issues"
+
+[project.scripts]
+dyon = "dyon.cli.main:cli"
+# Legacy alias — kept so existing 'dtforge ...' invocations keep working.
+dtforge = "dyon.cli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+# Ship only the framework. The legacy 'dt_forge' import name is provided by the
+# separate 'dt-forge' redirect distribution (see packaging/dt-forge/), which
+# depends on 'dyon' and carries the compatibility shim.
+include = ["dyon*"]
+
+[tool.setuptools.package-data]
+# Ship the PEP 561 marker so type checkers trust dyon's inline annotations.
+"dyon" = ["py.typed"]
+# Ship the dashboard client (HTML/CSS/JS) with the package; without this,
+# setuptools includes only .py files and the /dashboard mount would be empty.
+"dyon.visualization" = ["assets/*"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true    # heavy optional deps (torch, sb3, langchain) ship no stubs
+check_untyped_defs = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# Import dyon from the repo source tree, not a stale site-packages install,
+# so tests exercise the code in this checkout regardless of what is pip-installed.
+pythonpath = ["."]
+# Default run: skip the slow/integration suites and enforce a coverage floor.
+# The floor is a non-regression ratchet (raise it, never lower it); the target is
+# 80% — the gap is in the RL/learning/simulation modules, which need dedicated
+# tests, not a lowered bar.
+addopts = "-m 'not slow and not integration' --cov=dyon --cov-report=term-missing --cov-fail-under=55"
+markers = [
+    "slow: integration tests that train models (deselect with '-m \"not slow\"')",
+    "integration: tests that spin real backends via docker-compose (deselect with '-m \"not integration\"')",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ASYNC", "RUF"]
+ignore = [
+    "SIM108",                      # ternary-vs-if is a style call; keep author's judgement
+    "RUF001", "RUF002", "RUF003",  # en-dashes / arrows / ellipses in human-readable strings & docstrings are intentional
+    "ASYNC109",                    # timeout params on our async APIs are a deliberate, documented design
+    "ASYNC110",                    # framework poll loops re-check a _running flag by design; not asyncio.Event candidates
+    "RUF012",                      # layer/service base classes declare shared class-level constants (states, transitions, dependencies) by intent
+    "UP042",                       # `(str, Enum)` is deliberate: StrEnum would change str()/f-string output from "Severity.WARNING" to "warning", altering log lines and LLM prompt text. JSON and pydantic output are identical either way, so there is nothing to gain.
+]

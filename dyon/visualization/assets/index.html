@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dyon Dashboard</title>
+  <link rel="stylesheet" href="dyon-dash.css" />
+  <!-- Charts: Vega-Lite via CDN (pinned). No build step. -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
+</head>
+<body>
+  <!-- The shell (sidebar, header, content, chat dock) is built by dyon-dash.js
+       once the spec loads; this skeleton just hosts it and shows a boot state. -->
+  <div class="app" data-booting>
+    <aside class="sidebar"></aside>
+    <div class="stage">
+      <header class="topbar"></header>
+      <main class="content">
+        <div class="boot-state">Loading dashboard…</div>
+      </main>
+    </div>
+    <div class="chat-dock" hidden></div>
+  </div>
+
+  <script src="dyon-dash.js"></script>
+  <!-- Optional 3D panel; self-gates on WebGL2 and lazy-loads <model-viewer>. -->
+  <script src="scene3d.js"></script>
+  <!-- Combined-twin overviews (aggregate / collection / composite / network);
+       no-op for a single twin. -->
+  <script src="dyon-combined.js"></script>
+</body>
+</html>
