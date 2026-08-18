@@ -67,6 +67,23 @@ the Data layer nor the Agent layer's control tier depends on it; only the API
 endpoints that read from Ditto stop working, and the rest of the API keeps
 serving.
 
+If you want the Ditto *interface* without the Ditto *server* — a composite whose
+member twins share one process, a demo, a test — swap the client rather than
+dropping it. `InProcessDittoClient` (`dyon.services.ditto`) implements the same
+contract against an in-memory registry of Things held across the process:
+
+```python
+from dyon.services.ditto import InProcessDittoClient, shared_registry
+
+ditto = InProcessDittoClient(self.config, shared_registry())
+```
+
+Every method the sync service and collection twins call is there with the same
+signature and the same "not found" behaviour, so nothing above it can tell it
+apart from the HTTP client — cross-twin reads work with no broker and no
+container. Swapping back to a real deployment is a one-line change to
+`DittoClient`.
+
 ---
 
 ## The FastAPI web API

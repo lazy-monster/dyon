@@ -79,6 +79,39 @@ automatically; this is why a model's output names must match your
 
 ---
 
+## When the model is the state: ModelStateFeed
+
+The runner assumes two sources of truth — sensors saying what the asset *is*
+doing, and a model saying what it *should* be doing — and reports the gap between
+them. Some twins have no sensors. A twin of a market's price level, or of any
+process no probe can reach, has only the model, so there is nothing to subtract it
+from. Left with the runner alone, such a twin computes a trajectory internally and
+publishes nothing — its dashboard stays blank and its siblings read an empty Thing.
+
+`ModelStateFeed` (`dyon.simulation`) is the layer those twins want. It steps the
+same `TwinModel`s, but instead of pairing predictions against readings it routes
+the model's state straight through the twin's ordinary telemetry path:
+
+```python
+from dyon.simulation import ModelStateFeed
+
+ModelStateFeed(self.config, self.bus,
+               router=telemetry_router,          # the twin's own TelemetryRouter
+               models=[demand_model],
+               step_interval=1.0,
+               control_inputs={"demand_dynamics": 2000.0})  # per model_name
+```
+
+The state lands in the time-series store, the cache, and the `telemetry.routed`
+event exactly as a sensor reading would, so everything downstream — alarm
+thresholds, the Ditto sync siblings read, the live dashboard — works unchanged,
+because nothing downstream can tell where a reading came from. Drive it while it
+runs with `set_control_input(model_name, value)`. Use it *instead of* a
+`ModelRunner` for the same models, never alongside one: both step the model, and
+stepping the same integrator twice a cycle advances it at twice the intended rate.
+
+---
+
 ## Writing a physics model
 
 You subclass `ODEModel` and implement one method, `derivatives()`, which returns
