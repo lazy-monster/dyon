@@ -319,11 +319,19 @@ The LLM is chosen entirely through configuration — no code change moves you
 between providers:
 
 ```bash
-DT_LLM__PROVIDER=anthropic        # openai | anthropic | ollama
+DT_LLM__PROVIDER=anthropic        # openai | anthropic | ollama | offline
 DT_LLM__MODEL=claude-sonnet-4-6
 DT_LLM__API_KEY=sk-ant-...
 # Ollama needs no key:  DT_LLM__PROVIDER=ollama, DT_LLM__BASE_URL=http://localhost:11434
+# No model at all:      DT_LLM__PROVIDER=offline answers in-process, no key, no network
 ```
+
+The `offline` provider is the zero-dependency floor: `OfflineChatModel`
+(`dyon.intelligent`) is a real chat model that answers from inside the process and
+accepts tool binding, so an agent graph builds and runs identically online or off.
+It is for demos, tests, and air-gapped runs — pass a `responder` to give it a
+domain voice. It constructs and responds; it does not reason, so treat it as a way
+to exercise every layer without a key, not a substitute for a model.
 
 And if you want an agent without a knowledge graph, construct a `KnowledgeGraph`
 and simply never call `setup_from_spec`. Its `diagnose_asset` tool reports no

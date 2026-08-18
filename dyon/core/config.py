@@ -61,7 +61,9 @@ class Neo4jConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    provider: str = "openai"        # "openai" | "anthropic" | "ollama"
+    # "openai" | "anthropic" | "ollama" | "offline"
+    # "offline" answers in-process with no provider — see dyon.intelligent.offline_llm.
+    provider: str = "openai"
     model: str = "gpt-4o-mini"
     api_key: str = ""
     base_url: str = ""              # for Ollama or custom deployments

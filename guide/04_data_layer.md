@@ -338,6 +338,20 @@ go. Nothing else in the twin changes, because nothing else knows which time-seri
 store it is talking to. If you replace the document store, implement
 `get_events_by_type` as well, since the reasoning tier relies on it.
 
+## Running without a backend
+
+Substituting a backend need not mean substituting *another* server. The framework
+ships an in-process implementation of each store — `InMemoryTimeSeriesAdapter`,
+`InMemoryDocumentAdapter`, `InMemoryCacheAdapter`, and `InMemoryObjectAdapter`,
+all from `dyon.data` — that holds its data in bounded structures instead of a
+database. They are real stores, not stubs: readings carry timestamps and are
+queried by window, events stay ordered and filterable, and cache keys expire. Pass
+them where the networked adapters would go and a whole twin runs with nothing
+installed — the right choice for a demo, a test that wants real store semantics,
+or an edge node with nowhere to put a database. What they do not do is survive the
+process, so a twin that must remember across restarts still wants the networked
+adapters, or `FileBackedObjectAdapter`, which persists to a local directory.
+
 ---
 
 With the foundation in place — readings stored, cleaned, scored, and auditable —

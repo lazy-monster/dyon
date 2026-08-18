@@ -118,14 +118,32 @@ compatibility shim will be removed in a future major release.
 
 ## Quick start
 
-### 1. Configure
-
-All configuration comes from environment variables with the `DT_` prefix.
-Nested fields use a **double-underscore** delimiter — `DT_MQTT__BROKER`, not
-`DT_MQTT_BROKER` (the single-underscore form is silently ignored). Put them in a
-`.env` file in your project directory:
+### 1. Scaffold a twin
 
 ```bash
+dyon init \
+  --asset-type centrifugal_pump \
+  --name "Plant A Pump" \
+  --asset-id pump_001
+```
+
+That writes two files into the output directory:
+
+| File      | Purpose                                                        |
+|-----------|----------------------------------------------------------------|
+| `twin.py` | A runnable twin — fill in your sensor fields and run it         |
+| `.env`    | Environment configuration, pre-filled with the defaults        |
+
+### 2. Configure
+
+Configuration comes from environment variables with the `DT_` prefix, and
+`dyon init` has already written them to `.env` with working defaults. Edit that
+file to match your deployment — you only change what differs. Nested fields use a
+**double-underscore** delimiter — `DT_MQTT__BROKER`, not `DT_MQTT_BROKER` (the
+single-underscore form is silently ignored).
+
+```bash
+# .env
 DT_ASSET_ID=pump_001
 DT_ASSET_TYPE=centrifugal_pump
 DT_ASSET_NAME="Plant A Pump"
@@ -149,9 +167,18 @@ DT_LLM__API_KEY=sk-ant-...
 DT_NEO4J__URI=bolt://localhost:7687
 ```
 
-Every field has a sensible default, so you only set what differs from the defaults.
+Then open `twin.py` and declare your sensor fields:
 
-### 2. Start the infrastructure you need
+```python
+config = TwinConfig(
+    sensor_fields=[
+        SensorFieldSpec(name="temperature_c", nominal=25.0, noise_std=0.5,
+                        warn_threshold=60.0, crit_threshold=75.0),
+    ]
+)
+```
+
+### 3. Start the infrastructure you need
 
 `dyon infra up` writes a `docker-compose.yml` with exactly the services your twin
 needs, then runs `docker compose up -d`:
@@ -177,32 +204,12 @@ dyon infra check          # reads .dyon-layers automatically
 
 Every reachable service prints a `✓`.
 
-### 3. Scaffold a twin
-
-```bash
-dyon init \
-  --asset-type centrifugal_pump \
-  --name "Plant A Pump" \
-  --asset-id pump_001
-```
-
-That writes two files into the output directory:
-
-| File      | Purpose                                                        |
-|-----------|----------------------------------------------------------------|
-| `twin.py` | A runnable twin — fill in your sensor fields and run it         |
-| `.env`    | Environment configuration, pre-filled with the defaults        |
-
-The generated `twin.py` runs as soon as you fill in your sensor fields, ingesting
-telemetry, storing it, scoring health, and raising warning/critical events
-automatically. Add modelling, diagnosis, and autonomy as your twin grows.
-
 ### 4. Run
 
 ```bash
 python twin.py            # run the module directly
 # or, from the project directory:
-dyon run twin          # imports twin.py and drives its lifecycle
+dyon run twin             # imports twin.py and drives its lifecycle
 ```
 
 If you enabled the API, the FastAPI app serves these endpoints:

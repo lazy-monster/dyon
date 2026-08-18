@@ -159,10 +159,21 @@ def build_llm(config: TwinConfig):
     Every client carries a per-request timeout, a response token cap, and
     client-level retries so a hung provider, a runaway response, or a transient
     429 cannot stall or overrun the intelligent layer.
+
+    The ``offline`` provider is the exception: it returns
+    :class:`~dyon.intelligent.offline_llm.OfflineChatModel`, which answers from
+    inside the process. Nothing is sent anywhere, so the timeout and retry
+    settings do not apply — use it for demos, tests, and air-gapped runs where
+    a reasoning tier that constructs and responds matters more than a reasoning
+    tier that reasons.
     """
     from dyon._compat import require
 
     cfg = config.llm
+    if cfg.provider == "offline":
+        from dyon.intelligent.offline_llm import OfflineChatModel
+
+        return OfflineChatModel()
     if cfg.provider == "openai":
         require("langchain_openai", "agents")
         from langchain_openai import ChatOpenAI

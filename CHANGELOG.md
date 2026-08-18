@@ -3,6 +3,42 @@
 All notable changes to Dyon are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] — 2026-08-18
+
+### Added
+
+- **A twin can now run with no infrastructure at all.** Every storage protocol
+  has an in-process implementation alongside its networked one:
+  `InMemoryTimeSeriesAdapter`, `InMemoryDocumentAdapter`, `InMemoryCacheAdapter`,
+  `InMemoryObjectAdapter`, and `FileBackedObjectAdapter`, all exported from
+  `dyon.data`. The cache exposes a redis-shaped client, so `SessionStore` keeps
+  its expiry and listing behaviour rather than silently losing them.
+- **Cross-twin state exchange without a broker.** `InProcessDittoClient` and
+  `ThingRegistry` (`dyon.services.ditto`) implement the `DittoClient` contract
+  against a registry of Things held in memory, and `InProcessConnector`
+  (`dyon.connector`) does the same for the collection layer's boundary exchange.
+  A composite whose members share a process no longer needs Eclipse Ditto to
+  move state between two objects in the same interpreter.
+- **A reasoning tier that constructs without a provider.** `OfflineChatModel`
+  (`dyon.intelligent`) is a real `BaseChatModel` that answers in-process and
+  accepts tool binding, so `create_tool_calling_agent` builds against it and an
+  agent graph compiles identically online or off. Reach it with
+  `DT_LLM__PROVIDER=offline`, and pass a `responder` to give it a domain voice.
+- **`NullGraphDriver`** (`dyon.intelligent`) satisfies the knowledge-graph driver
+  contract without Neo4j, so schema setup is a no-op and queries return empty
+  instead of timing out one statement at a time. Threshold-driven symptom
+  detection is unaffected, since it evaluates the spec in Python.
+- **`ModelStateFeed`** (`dyon.simulation`) for twins whose model *is* the state
+  of record rather than something to compare readings against. It steps its
+  models and routes their state through the twin's ordinary telemetry path, so
+  alarms, Ditto sync, and dashboards work unchanged. Use it instead of
+  `ModelRunner` for the same models, never alongside.
+
+Everything here is additive and opt-in. A twin that asks for none of it behaves
+exactly as it did.
+
+[0.11.0]: https://pypi.org/project/dyon/0.11.0/
+
 ## [0.10.2] — 2026-07-13
 
 ### Changed

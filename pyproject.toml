@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dyon"
-version = "0.10.2"
+version = "0.11.0"
 description = "Domain-agnostic Python framework for digital twin architectures"
 readme = "README.md"
 requires-python = ">=3.11"
